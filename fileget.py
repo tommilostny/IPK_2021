@@ -29,13 +29,26 @@ def resolve_surl(surl: str):
 	path = str.join("/", split[3:])
 	return server, path
 
+def send_socket(message: str, ip: str, port: int, buffer_size: int):
+	with socket(AF_INET, SOCK_DGRAM) as client_socket:
+		client_socket.sendto(bytes(message, "utf-8"), (ip, port))
+		received_msg, _ = client_socket.recvfrom(buffer_size)
+	return received_msg
+
 args = parse_arguments()
 server_ip, server_port = resolve_ipaddress(args.nameserver)
 server_name, file_path = resolve_surl(args.surl)
 
-with socket(AF_INET, SOCK_DGRAM) as client_socket:
-	message = bytes(f"WHEREIS {server_name}\n", "utf-8")
-	client_socket.sendto(message, (server_ip, server_port))
-	received_msg, address = client_socket.recvfrom(256)
+whereis_message = f"WHEREIS {server_name}\r\n"
+received = send_socket(whereis_message, server_ip, server_port, buffer_size=256)
 
-print(f"Message is: {received_msg}")
+if received[:2] == b"OK":
+	_, server_port = resolve_ipaddress(str(received)[5:-1])
+	get_message = f"GET {file_path} FSP/1.0\r\nHostname: {server_name}\r\nAgent: xmilos02\r\n\r\n"
+	
+	print(get_message, end="")
+
+	#content = send_socket(get_message, server_ip, server_port, buffer_size=4096)
+	#print(content)
+else:
+	print(str(received)[2:-1] + f': "{server_name}"')
