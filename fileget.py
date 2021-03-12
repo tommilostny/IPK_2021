@@ -20,9 +20,9 @@ def resolve_ipaddress(address: str):
 	return ip, port
 
 def resolve_surl(surl: str):
-	surl_pattern = compile("^(ftp://.+/.+)$")
+	surl_pattern = compile("^(fsp://.+/.+)$")
 	if not surl_pattern.match(surl):
-		print('Bad SURL format format "ftp://SERVERNAME/FILE"')
+		print('Bad SURL format format "fsp://SERVERNAME/FILE"')
 		exit(2)
 	split = surl.split("/")
 	server = split[2]
