@@ -37,14 +37,21 @@ def send_socket(message: str, ip: str, port: int, buffer_size: int, socket_kind:
 		client_socket.sendall(message.encode())
 		received_msg = client_socket.recv(buffer_size)
 
-		while socket_kind is SOCK_STREAM: #loading data only from stream socket
-			try:
-				data = client_socket.recv(buffer_size)
-			except timeout: break
-			if not data: break
-			received_msg += data
+		if socket_kind is SOCK_STREAM:
+			received_msg += load_data(client_socket, buffer_size)
 
 	return received_msg.decode()
+
+def load_data(socket: socket, buffer_size: int):
+	result = b""
+	while True:
+		try:
+			data = socket.recv(buffer_size)
+		except timeout: break
+		if not data: break
+		result += data
+	return result
+
 
 args = parse_arguments()
 server_ip, server_port = resolve_ipaddress(args.nameserver)
