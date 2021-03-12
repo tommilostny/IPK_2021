@@ -1,7 +1,8 @@
 from argparse import ArgumentParser
 from re import compile
-from socket import AF_INET, SOCK_DGRAM, socket
+from socket import AF_INET, SOCK_DGRAM, SOCK_STREAM, SocketKind, socket, timeout
 from sys import exit
+
 
 def parse_arguments():
 	parser = ArgumentParser()
@@ -29,26 +30,33 @@ def resolve_surl(surl: str):
 	path = str.join("/", split[3:])
 	return server, path
 
-def send_socket(message: str, ip: str, port: int, buffer_size: int):
-	with socket(AF_INET, SOCK_DGRAM) as client_socket:
-		client_socket.sendto(bytes(message, "utf-8"), (ip, port))
-		received_msg, _ = client_socket.recvfrom(buffer_size)
-	return received_msg
+def send_socket(message: str, ip: str, port: int, buffer_size: int, socket_kind: SocketKind):
+	with socket(AF_INET, socket_kind) as client_socket:
+		client_socket.settimeout(5.0)
+		client_socket.connect((ip, port))
+		client_socket.sendall(message.encode())
+		received_msg = client_socket.recv(buffer_size)
+
+		while socket_kind is SOCK_STREAM: #loading data only from stream socket
+			try:
+				data = client_socket.recv(buffer_size)
+			except timeout: break
+			if not data: break
+			received_msg += data
+
+	return received_msg.decode()
 
 args = parse_arguments()
 server_ip, server_port = resolve_ipaddress(args.nameserver)
 server_name, file_path = resolve_surl(args.surl)
 
 whereis_message = f"WHEREIS {server_name}\r\n"
-received = send_socket(whereis_message, server_ip, server_port, buffer_size=256)
+received = send_socket(whereis_message, server_ip, server_port, buffer_size=256, socket_kind=SOCK_DGRAM)
 
-if received[:2] == b"OK":
-	_, server_port = resolve_ipaddress(str(received)[5:-1])
+if received[:2] == "OK":
+	_, server_port = resolve_ipaddress(received[3:])
 	get_message = f"GET {file_path} FSP/1.0\r\nHostname: {server_name}\r\nAgent: xmilos02\r\n\r\n"
-	
-	print(get_message, end="")
-
-	#content = send_socket(get_message, server_ip, server_port, buffer_size=4096)
-	#print(content)
+	received = send_socket(get_message, server_ip, server_port, buffer_size=4096, socket_kind=SOCK_STREAM)
+	print(received)
 else:
-	print(str(received)[2:-1] + f': "{server_name}"')
+	print(f'{received}: "{server_name}"')
