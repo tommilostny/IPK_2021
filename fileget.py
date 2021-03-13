@@ -52,13 +52,12 @@ def process_socket(message:str, ip:str, port:int, buffer_size:int, socket_kind:S
 	return received_msg, success
 
 def generate_dir_structure(file_path:str):
-	if "/" in file_path:
-		dir_path = ""
-		for folder in file_path.split("/")[:-1]:
-			dir_path += folder
-			try: mkdir(dir_path)
-			except FileExistsError: pass
-			dir_path += "/"
+	dir_path = ""
+	for folder in file_path.split("/")[:-1]:
+		dir_path += folder
+		try: mkdir(dir_path)
+		except FileExistsError: pass
+		dir_path += "/"
 
 def download_file_data(socket:socket, buffer_size:int, path:str, start_data:bytes):
 	print(f"Downloading {path}...")
@@ -85,7 +84,7 @@ args = parse_arguments()
 server_ip, server_port = resolve_ipaddress(args.nameserver)
 server_name, file_path, collective_download  = resolve_surl(args.surl)
 
-wireq_content, success = whereis_request(server_name)
+wireq_content, success = whereis_request(server_name, server_ip, server_port)
 if success:
 	_, server_port = resolve_ipaddress(wireq_content.decode()[3:])
 	if collective_download:
