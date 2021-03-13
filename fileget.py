@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from re import compile
 from socket import AF_INET, SOCK_DGRAM, SOCK_STREAM, SocketKind, socket, timeout
-from sys import exit
+from sys import exit, stderr
 
 
 def parse_arguments():
@@ -13,7 +13,7 @@ def parse_arguments():
 def resolve_ipaddress(address:str):
 	ip_pattern = compile("^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5})$")
 	if not ip_pattern.match(address):
-		print("Bad NAMESERVER format format (expected IP:PORT)")
+		stderr.write("Bad NAMESERVER format format (expected IP:PORT)\n")
 		exit(1)
 	split = address.split(":")
 	ip = split[0]
@@ -23,7 +23,7 @@ def resolve_ipaddress(address:str):
 def resolve_surl(surl:str):
 	surl_pattern = compile("^(fsp://([a-zA-Z]|-|_|\.)+/.+)$")
 	if not surl_pattern.match(surl):
-		print("Bad SURL format format (expected fsp://SERVER_NAME/PATH)")
+		stderr.write("Bad SURL format format (expected fsp://SERVER_NAME/PATH)\n")
 		exit(2)
 	split = surl.split("/")
 	server = split[2]
@@ -44,7 +44,7 @@ def process_socket(message:str, ip:str, port:int, buffer_size:int, socket_kind:S
 			if success:
 				download_file_data(client_socket, buffer_size, path, bytes.join(b"\n", msg_split[3:-1]))
 			else:
-				print(f"{msg_split[0].decode()}: {path}")
+				stderr.write(f"{msg_split[0].decode()}: {path}\n")
 		elif socket_kind is SOCK_DGRAM:
 			success = received_msg[:2] == b"OK"
 
@@ -85,4 +85,4 @@ if success:
 	else:
 		get_request(file_path, server_name, server_ip, server_port)
 else:
-	print(f"{wireq_content.decode()}: {server_name}")
+	stderr.write(f"{wireq_content.decode()}: {server_name}\n")
