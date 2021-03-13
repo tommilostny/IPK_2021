@@ -57,17 +57,21 @@ def download_file_data(socket:socket, buffer_size:int, path:str, start_data:byte
 			except timeout: break
 			if not data: break
 
+def whereis_request(server_name:str):
+	whereis_message = f"WHEREIS {server_name}\r\n"
+	return process_socket(whereis_message, server_ip, server_port, buffer_size=256, socket_kind=SOCK_DGRAM)
+
+def get_request(file_path:str, server_name:str, ip:str, port:int):
+	get_message = f"GET {file_path} FSP/1.0\r\nHostname: {server_name}\r\nAgent: xmilos02\r\n\r\n"
+	process_socket(get_message, ip, port, buffer_size=4096, socket_kind=SOCK_STREAM, path=file_path)
 
 args = parse_arguments()
 server_ip, server_port = resolve_ipaddress(args.nameserver)
 server_name, file_path = resolve_surl(args.surl)
 
-whereis_message = f"WHEREIS {server_name}\r\n"
-received = process_socket(whereis_message, server_ip, server_port, buffer_size=256, socket_kind=SOCK_DGRAM)
-
-if received[:2] == b"OK":
-	_, server_port = resolve_ipaddress(received.decode()[3:])
-	get_message = f"GET {file_path} FSP/1.0\r\nHostname: {server_name}\r\nAgent: xmilos02\r\n\r\n"
-	process_socket(get_message, server_ip, server_port, buffer_size=4096, socket_kind=SOCK_STREAM, path=file_path)
+wireq_content = whereis_request(server_name)
+if wireq_content[:2] == b"OK":
+	_, server_port = resolve_ipaddress(wireq_content.decode()[3:])
+	get_request(file_path, server_name, server_ip, server_port)
 else:
-	print(f'{received}: "{server_name}"')
+	print(f'{wireq_content}: "{server_name}"')
