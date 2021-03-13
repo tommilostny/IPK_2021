@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from os import mkdir
 from re import compile
 from socket import AF_INET, SOCK_DGRAM, SOCK_STREAM, SocketKind, socket, timeout
 from sys import exit, stderr
@@ -50,8 +51,18 @@ def process_socket(message:str, ip:str, port:int, buffer_size:int, socket_kind:S
 
 	return received_msg, success
 
+def generate_path_dir_structure(file_path:str):
+	if "/" in file_path:
+		path = ""
+		for folder in file_path.split("/")[:-1]:
+			path += folder
+			try: mkdir(path)
+			except FileExistsError: pass
+			path += "/"
+
 def download_file_data(socket:socket, buffer_size:int, path:str, start_data:bytes):
 	print(f"Downloading {path}...")
+	generate_path_dir_structure(path)
 	with open(path, "wb") as file:
 		data = start_data
 		while True:
