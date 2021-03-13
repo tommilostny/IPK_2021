@@ -51,18 +51,18 @@ def process_socket(message:str, ip:str, port:int, buffer_size:int, socket_kind:S
 
 	return received_msg, success
 
-def generate_path_dir_structure(file_path:str):
+def generate_dir_structure(file_path:str):
 	if "/" in file_path:
-		path = ""
+		dir_path = ""
 		for folder in file_path.split("/")[:-1]:
-			path += folder
-			try: mkdir(path)
+			dir_path += folder
+			try: mkdir(dir_path)
 			except FileExistsError: pass
-			path += "/"
+			dir_path += "/"
 
 def download_file_data(socket:socket, buffer_size:int, path:str, start_data:bytes):
 	print(f"Downloading {path}...")
-	generate_path_dir_structure(path)
+	generate_dir_structure(path)
 	with open(path, "wb") as file:
 		data = start_data
 		while True:
@@ -71,9 +71,9 @@ def download_file_data(socket:socket, buffer_size:int, path:str, start_data:byte
 			except timeout: break
 			if not data: break
 
-def whereis_request(server_name:str):
+def whereis_request(server_name:str, ip:str, port:int):
 	whereis_message = f"WHEREIS {server_name}\r\n"
-	return process_socket(whereis_message, server_ip, server_port, buffer_size=256, socket_kind=SOCK_DGRAM)
+	return process_socket(whereis_message, ip, port, buffer_size=256, socket_kind=SOCK_DGRAM)
 
 def get_request(file_path:str, server_name:str, ip:str, port:int):
 	get_message = f"GET {file_path} FSP/1.0\r\nHostname: {server_name}\r\nAgent: xmilos02\r\n\r\n"
