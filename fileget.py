@@ -32,7 +32,7 @@ def resolve_surl(surl:str):
 	all_files = split[-1] == "*"
 	return server, path, all_files
 
-def process_socket(message:str, ip:str, port:int, buffer_size:int, socket_kind:SocketKind, path=""):
+def process_socket(message:str, ip:str, port:int, buffer_size:int, socket_kind:SocketKind, path:str=""):
 	with socket(AF_INET, socket_kind) as client_socket:
 		client_socket.settimeout(5.0)
 		client_socket.connect((ip, port))
@@ -43,11 +43,12 @@ def process_socket(message:str, ip:str, port:int, buffer_size:int, socket_kind:S
 			msg_split = received_msg.split(b"\r\n")
 			success = msg_split[0] == b"FSP/1.0 Success"
 			if success:
-				download_file_data(client_socket, buffer_size, path, bytes.join(b"\n", msg_split[3:-1]))
+				success = download_file_data(client_socket, buffer_size, path, start_data=bytes.join(b"\n", msg_split[3:-1]))
 			else:
 				stderr.write(f"{msg_split[0].decode()}: {path}\n")
 		elif socket_kind is SOCK_DGRAM:
 			success = received_msg[:2] == b"OK"
+		else: success = False
 
 	return received_msg, success
 
@@ -60,15 +61,19 @@ def generate_dir_structure(file_path:str):
 		dir_path += "/"
 
 def download_file_data(socket:socket, buffer_size:int, path:str, start_data:bytes):
-	print(f"Downloading {path}...")
+	print(f"Downloading {path} ...")
 	generate_dir_structure(path)
+	done = False
 	with open(path, "wb") as file:
 		data = start_data
-		while True:
+		while not done:
 			file.write(data)
 			try: data = socket.recv(buffer_size)
 			except timeout: break
-			if not data: break
+			if not data: done = True
+	if not done:
+		stderr.write(f"Error occurred while downloading {path}.\n")
+	return done
 
 def whereis_request(server_name:str, ip:str, port:int):
 	whereis_message = f"WHEREIS {server_name}\r\n"
