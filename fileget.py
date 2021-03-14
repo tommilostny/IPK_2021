@@ -43,7 +43,7 @@ def process_socket(message:str, ip:str, port:int, buffer_size:int, socket_kind:S
 			msg_split = received_msg.split(b"\r\n")
 			success = msg_split[0] == b"FSP/1.0 Success"
 			if success:
-				success = download_file_data(client_socket, buffer_size, path, start_data=bytes.join(b"\n", msg_split[3:-1]))
+				success = download_file_data(client_socket, buffer_size, path, start_data=bytes.join(b"\n", msg_split[3:]))
 			else:
 				stderr.write(f"{msg_split[0].decode()}: {path}\n")
 		elif socket_kind is SOCK_DGRAM:
@@ -79,8 +79,10 @@ def whereis_request(server_name:str, ip:str, port:int):
 	whereis_message = f"WHEREIS {server_name}\r\n"
 	return process_socket(whereis_message, ip, port, buffer_size=256, socket_kind=SOCK_DGRAM)
 
-def get_request(file_path:str, server_name:str, ip:str, port:int):
+def get_request(file_path:str, server_name:str, ip:str, port:int, replace_in_path:str=None):
 	get_message = f"GET {file_path} FSP/1.0\r\nHostname: {server_name}\r\nAgent: xmilos02\r\n\r\n"
+	if replace_in_path is not None:
+		file_path = file_path.replace(replace_in_path, "")
 	_, status = process_socket(get_message, ip, port, buffer_size=4096, socket_kind=SOCK_STREAM, path=file_path)
 	return status
 
@@ -93,10 +95,12 @@ wireq_content, success = whereis_request(server_name, server_ip, server_port)
 if success:
 	_, server_port = resolve_ipaddress(wireq_content.decode()[3:])
 	if collective_download:
+		file_path = file_path.replace("*", "")
 		if get_request("index", server_name, server_ip, server_port):
 			with open("index", "r") as index:
 				for file in index.read().split("\n"):
-					if file == "" or not get_request(file, server_name, server_ip, server_port): break
+					if not file_path in file: continue
+					if file == "" or not get_request(file, server_name, server_ip, server_port, file_path): break
 	else:
 		get_request(file_path, server_name, server_ip, server_port)
 else:
