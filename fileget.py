@@ -41,7 +41,10 @@ def process_socket(message:str, ip:str, port:int, socket_kind:SocketKind, buffer
 		client_socket.settimeout(5.0)
 		client_socket.connect((ip, port))
 		client_socket.sendall(message.encode())
-		received_msg = client_socket.recv(buffer_size)
+		try: received_msg = client_socket.recv(buffer_size)
+		except timeout:
+			stderr.write("Connection timed out.\n")
+			return None, False
 
 		if socket_kind is SocketKind.SOCK_STREAM:
 			msg_split = received_msg.split(b"\r\n")
@@ -54,27 +57,27 @@ def process_socket(message:str, ip:str, port:int, socket_kind:SocketKind, buffer
 			success = received_msg[:2] == b"OK"
 		else: success = False
 
-	return received_msg.decode(), success
+	return received_msg, success
 
 def generate_dir_structure(file_path:str):
-	dir_path = ""
-	for folder in file_path.split("/")[:-1]:
-		dir_path += folder
-		try: mkdir(dir_path)
+	path_part = ""
+	for dir in file_path.split("/")[:-1]:
+		path_part += dir
+		try: mkdir(path_part)
 		except FileExistsError: pass
-		dir_path += "/"
+		path_part += "/"
 
 def download_file_data(socket:socket, buffer_size:int, path:str, start_data:bytes):
 	print(f"Downloading {path} ...")
 	generate_dir_structure(path)
-	done = False
 	with open(path, "wb") as file:
+		done = False
 		data = start_data
 		while not done:
 			file.write(data)
 			try: data = socket.recv(buffer_size)
 			except timeout: break
-			if not data: done = True
+			done = not data
 	if not done:
 		stderr.write(f"Error occurred while downloading {path}.\n")
 	return done
@@ -84,6 +87,8 @@ def whereis_request(server_name:str, ip:str, port:int):
 	content, success = process_socket(whereis_message, ip, port, SocketKind.SOCK_DGRAM, buffer_size=256)
 	if not success:
 		stderr.write(f"{content}: {server_name}\n")
+	else:
+		content = content.decode()
 	return content, success
 
 def get_request(file_path:str, server_name:str, ip:str, port:int, replace_in_path:str=None):
