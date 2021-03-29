@@ -67,6 +67,8 @@ def process_socket(message:str, address:Tuple[str, int], buffer_size:int, path:s
 			received_msg = client_socket.recv(buffer_size)
 		except timeout:
 			return b"Connection timed out.\n", False
+		except ConnectionRefusedError:
+			return b"Connection refused.\n", False
 
 		if request_type == "GET":
 			msg_split = received_msg.split(b"\r\n")
