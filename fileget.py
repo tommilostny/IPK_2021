@@ -102,11 +102,16 @@ def download_file_data(socket:socket, buffer_size:int, path:str, start_data:byte
 		Requires start data, that could appear in the first message.
 		Returns true if the whole file was downloaded correctly.
 	"""
-	generate_dir_structure(path)
-	with open(path, "wb") as file:
-		done = False
+	done = False
+	if total_data_length == 0:
+		data = b""
+		downloaded = total_data_length = 1
+	else:
 		data = start_data
 		downloaded = len(start_data)
+
+	generate_dir_structure(path)
+	with open(path, "wb") as file:
 		while not done:
 			print(f"Downloading {path} ... {round(downloaded / total_data_length * 100.0, 2)}%", end="\r")
 			file.write(data)
