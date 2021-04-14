@@ -6,4 +6,8 @@
     <RootNamespace>ipk_l2l3_scan</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20574.7" />
+  </ItemGroup>
+
 </Project>
