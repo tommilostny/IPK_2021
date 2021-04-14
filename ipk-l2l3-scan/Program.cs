@@ -10,19 +10,10 @@ using System.Net.NetworkInformation;
 
 async Task<(string, uint, string[])> ParseArguments(string[] args)
 {
-    var interfaceOption = new Option<string>
-    (
-        aliases: new string[] { "--interface", "-i" }
-    );
-    var waitOption = new Option<uint>
-    (
-        aliases: new string[] { "--wait", "-w" },
-        getDefaultValue: () => 5000
-    );
-    var subnetOptions = new Option<string[]>
-    (
-        aliases: new string[] { "--subnet", "-s" }
-    );
+    var interfaceOption = new Option<string>  (new string[] { "--interface", "-i" });
+    var waitOption      = new Option<uint>    (new string[] { "--wait", "-w" }, getDefaultValue:() => 5000);
+    var subnetOptions   = new Option<string[]>(new string[] { "--subnet", "-s" });
+
     subnetOptions.IsRequired = args.Contains("--interface") || args.Contains("-i");
 
     var rootCommand = new RootCommand { interfaceOption, waitOption, subnetOptions };
@@ -57,7 +48,10 @@ string @interface;
 uint timeout;
 string[] subnets;
 
-try { (@interface, timeout, subnets) = await ParseArguments(args); }
+try
+{
+    (@interface, timeout, subnets) = await ParseArguments(args);
+}
 catch { return 1; }
 
 if (args.Contains("--help") || args.Contains("-h") || args.Contains("-?") || args.Contains("--version"))
