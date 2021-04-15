@@ -10,10 +10,19 @@ using System.Net.NetworkInformation;
 
 async Task<(NetworkInterface, uint, string[])> ParseArguments(string[] args)
 {
-    var interfaceOption = new Option<string>  (new string[] { "--interface", "-i" });
-    var waitOption      = new Option<uint>    (new string[] { "--wait", "-w" }, getDefaultValue:() => 5000);
-    var subnetOptions   = new Option<string[]>(new string[] { "--subnet", "-s" });
-
+    var interfaceOption = new Option<string>
+    (
+        aliases: new string[] { "--interface", "-i" }
+    );
+    var waitOption = new Option<uint>
+    (
+        aliases: new string[] { "--wait", "-w" },
+        getDefaultValue:() => 5000
+    );
+    var subnetOptions = new Option<string[]>
+    (
+        aliases: new string[] { "--subnet", "-s" }
+    );
     subnetOptions.IsRequired = args.Contains("--interface") || args.Contains("-i");
 
     var rootCommand = new RootCommand { interfaceOption, waitOption, subnetOptions };
@@ -23,15 +32,39 @@ async Task<(NetworkInterface, uint, string[])> ParseArguments(string[] args)
     rootCommand.Handler = CommandHandler.Create<string, uint, string[]>((@interface, wait, subnet) =>
     {
         parsedArgs = (
-            NetworkInterface.GetAllNetworkInterfaces().SingleOrDefault(i => i.Name == @interface),
+            NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(i => i.Name == @interface),
             wait,
-            subnet);
+            subnet
+        );
     });
     
     if (await rootCommand.InvokeAsync(args) != 0)
         throw new ArgumentException();
 
+    if (parsedArgs.Item3 is not null && parsedArgs.Item1 is not null)
+        parsedArgs.Item3 = await ParseSubnets(parsedArgs.Item3);
+    
     return parsedArgs;
+}
+
+async Task<string[]> ParseSubnets(string[] subnets)
+{
+    var tasks = new List<Task<string>>();
+    foreach (var subnet in subnets)
+    {
+        tasks.Add(Task.Run(() => ParseSubnet(subnet)));
+    }
+    var parsedSubnets = new string[tasks.Count];
+    for (int i = 0; i < parsedSubnets.Length; i++)
+    {
+        parsedSubnets[i] = await tasks[i];
+    }
+    return parsedSubnets;
+}
+
+string ParseSubnet(string subnet)
+{
+    return subnet;
 }
 
 void PrintAllInterfaces()
@@ -65,6 +98,7 @@ if (args.Contains("--help") || args.Contains("-h") || args.Contains("-?") || arg
 
 if (@interface is null)
 {
+    Console.WriteLine("Missing or invalid paramerer --input.");
     PrintAllInterfaces();
     return 0;
 }
