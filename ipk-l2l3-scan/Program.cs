@@ -20,7 +20,7 @@ void PrintAllInterfaces()
 
 NetworkInterface @interface;
 uint timeout;
-string[] subnets;
+Subnet[] subnets;
 
 try
 {
@@ -37,9 +37,23 @@ if (@interface is null)
     PrintAllInterfaces();
     return 0;
 }
+if (subnets.Any(s => s is null))
+    return 1;
 
 Console.WriteLine($"Interface:\t{@interface.Name}");
 Console.WriteLine($"Timeout:\t{timeout} ms");
-Console.WriteLine($"Subnets:\t{string.Join(", ", subnets)}");
+Console.WriteLine($"Subnets:");
+foreach (var subnet in subnets)
+{
+    Console.Write($"\t{subnet.IP} with");
+    if (subnet.Maskv6 is not null)
+    {
+        Console.WriteLine($" IPv6 mask {Convert.ToString((long)subnet.Maskv6[0], 2)} {Convert.ToString((long)subnet.Maskv6[1], 2)}");
+    }
+    if (subnet.Maskv4 is not null)
+    {
+        Console.WriteLine($" IPv4 mask {Convert.ToString((uint)subnet.Maskv4, 2)}.");
+    }
+}
 
 return 0;

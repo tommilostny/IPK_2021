@@ -7,7 +7,7 @@ using System.Net.NetworkInformation;
 
 public static class ArgumentParser
 {
-    public static async Task<(NetworkInterface, uint, string[])> ParseArguments(string[] args)
+    public static async Task<(NetworkInterface, uint, Subnet[])> ParseArguments(string[] args)
     {
         var interfaceOption = new Option<string>
         (
@@ -27,22 +27,18 @@ public static class ArgumentParser
         var rootCommand = new RootCommand { interfaceOption, waitOption, subnetOptions };
         rootCommand.Description = "IPK Project 2\nDELTA variant: Network availability scanner";
 
-        (NetworkInterface, uint, string[]) parsedArgs = (null, 0, null);
+        (string, uint, string[]) parsedArgs = (null, 0, null);
         rootCommand.Handler = CommandHandler.Create<string, uint, string[]>((@interface, wait, subnet) =>
         {
-            parsedArgs = (
-                NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(i => i.Name == @interface),
-                wait,
-                subnet
-            );
+            parsedArgs = ( @interface, wait, subnet );
         });
         
         if (await rootCommand.InvokeAsync(args) != 0)
             throw new ArgumentException();
 
-        if (parsedArgs.Item3 is not null && parsedArgs.Item1 is not null)
-            parsedArgs.Item3 = await SubnetParser.ParseSubnets(parsedArgs.Item3);
-        
-        return parsedArgs;
+        var @interface = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(i => i.Name == parsedArgs.Item1);
+        var subnets = await SubnetParser.ParseSubnets(parsedArgs.Item3);
+
+        return (@interface, parsedArgs.Item2, subnets);
     }
 }
