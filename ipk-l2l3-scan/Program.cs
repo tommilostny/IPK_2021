@@ -36,14 +36,17 @@ async Task<(NetworkInterface, uint, string[])> ParseArguments(string[] args)
 
 void PrintAllInterfaces()
 {
-    var allInterfaces = new List<string>();
+    Console.WriteLine("Available network interfaces:\n");
+    Console.ForegroundColor = ConsoleColor.Cyan;
+    Console.WriteLine("NAME\tSTATUS\tTYPE");
+    Console.ResetColor();
     foreach (var @interface in NetworkInterface.GetAllNetworkInterfaces())
     {
-        allInterfaces.Add(@interface.Name);
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.Write(@interface.Name);
+        Console.ResetColor();
+        Console.WriteLine($"\t{@interface.OperationalStatus}\t{@interface.NetworkInterfaceType}");
     }
-    Console.ForegroundColor = ConsoleColor.Green;
-    Console.WriteLine(string.Join('\n', allInterfaces));
-    Console.ResetColor();
 }
 
 
@@ -62,12 +65,11 @@ if (args.Contains("--help") || args.Contains("-h") || args.Contains("-?") || arg
 
 if (@interface is null)
 {
-    Console.WriteLine("Missing or invalid --interface argument, here are available interfaces:");
     PrintAllInterfaces();
     return 0;
 }
 
-Console.WriteLine($"Interface:\t{@interface.Name}, {@interface.OperationalStatus}, {@interface.NetworkInterfaceType}, {@interface.Speed} bps");
+Console.WriteLine($"Interface:\t{@interface.Name}");
 Console.WriteLine($"Timeout:\t{timeout} ms");
 Console.WriteLine($"Subnets:\t{string.Join(", ", subnets)}");
 
