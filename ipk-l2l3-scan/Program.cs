@@ -8,7 +8,7 @@ using System.Net.Sockets;
 using System.Net.NetworkInformation;
 
 
-async Task<(string, uint, string[])> ParseArguments(string[] args)
+async Task<(NetworkInterface, uint, string[])> ParseArguments(string[] args)
 {
     var interfaceOption = new Option<string>  (new string[] { "--interface", "-i" });
     var waitOption      = new Option<uint>    (new string[] { "--wait", "-w" }, getDefaultValue:() => 5000);
@@ -19,10 +19,13 @@ async Task<(string, uint, string[])> ParseArguments(string[] args)
     var rootCommand = new RootCommand { interfaceOption, waitOption, subnetOptions };
     rootCommand.Description = "IPK Project 2\nDELTA variant: Network availability scanner";
 
-    (string, uint, string[]) parsedArgs = (null, 0, null);
+    (NetworkInterface, uint, string[]) parsedArgs = (null, 0, null);
     rootCommand.Handler = CommandHandler.Create<string, uint, string[]>((@interface, wait, subnet) =>
     {
-        parsedArgs = (@interface, wait, subnet);
+        parsedArgs = (
+            NetworkInterface.GetAllNetworkInterfaces().SingleOrDefault(i => i.Name == @interface),
+            wait,
+            subnet);
     });
     
     if (await rootCommand.InvokeAsync(args) != 0)
@@ -44,7 +47,7 @@ void PrintAllInterfaces()
 }
 
 
-string @interface;
+NetworkInterface @interface;
 uint timeout;
 string[] subnets;
 
@@ -59,12 +62,12 @@ if (args.Contains("--help") || args.Contains("-h") || args.Contains("-?") || arg
 
 if (@interface is null)
 {
-    Console.WriteLine("Missing --interface argument, here are available interfaces:");
+    Console.WriteLine("Missing or invalid --interface argument, here are available interfaces:");
     PrintAllInterfaces();
     return 0;
 }
 
-Console.WriteLine($"Interface:\t{@interface}");
+Console.WriteLine($"Interface:\t{@interface.Name}, {@interface.OperationalStatus}, {@interface.NetworkInterfaceType}, {@interface.Speed} bps");
 Console.WriteLine($"Timeout:\t{timeout} ms");
 Console.WriteLine($"Subnets:\t{string.Join(", ", subnets)}");
 
