@@ -46,22 +46,12 @@ Console.WriteLine($"Timeout:\t{timeout} ms");
 Console.WriteLine($"Subnets:");
 foreach (var subnet in subnets)
 {
-    Console.Write($"\t{subnet.IP} with");
-    if (subnet.Maskv6 is not null)
+    Console.Write($"{subnet.Address} with mask ");
+    foreach (var item in subnet.Mask)
     {
-        Console.WriteLine($" IPv6 mask {Convert.ToString((long)subnet.Maskv6[0], 2)} {Convert.ToString((long)subnet.Maskv6[1], 2)}");
-        continue;
+        Console.Write($"{Convert.ToString(item, 2)} ");
     }
-
-    var iterations = Math.Pow(2, (subnet.IP.AddressFamily == AddressFamily.InterNetwork ? 32 : 128) - subnet.MaskLength);
-    for (int i = 0; i < iterations; i++)
-    {
-        if (subnet.Maskv4 is not null)
-        {
-            Console.WriteLine($" IPv4  {Convert.ToString((uint)subnet.Maskv4, 2)} -> {IPAddress.Parse(subnet.Maskv4.ToString())}");
-            subnet.Maskv4++;
-        }   
-    }
+    Console.WriteLine();
 }
 
 return 0;

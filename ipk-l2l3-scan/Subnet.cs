@@ -1,46 +1,70 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 
-#nullable enable
-
 public class Subnet
 {
-    public IPAddress IP { get; }
+    public IPAddress Address { get; private set; }
 
-    public uint? Maskv4 { get; set; } = null;
+    public byte[] Mask { get; }
 
-    public ulong[]? Maskv6 { get; set; } = null;
-
-    public ushort MaskLength { get; }
+    public ushort Length { get; }
 
     public Subnet(IPAddress ip, ushort maskLength)
     {
-        if (ip.AddressFamily == AddressFamily.InterNetwork)
+        Mask = ip.AddressFamily switch
         {
-            if (maskLength > 32)
-                throw new ArgumentOutOfRangeException($"Invalid IP mask length: {maskLength}.");
+            AddressFamily.InterNetwork => CreateMask(maskLength, 32),
+            AddressFamily.InterNetworkV6 => CreateMask(maskLength, 128),
+            _ => throw new ArgumentException($"Invalid IP address family: {ip.AddressFamily}.")
+        };
 
-            Maskv4 = 0U;
-            for (ushort i = 0; i < maskLength; i++)
-            {
-                Maskv4 = (Maskv4 >> 1) | 0x8000_0000U;
-            }
-        }
-        else if (ip.AddressFamily == AddressFamily.InterNetworkV6)
+        Address = ApplyMask(ip, Mask);
+
+        Length = ip.AddressFamily switch
         {
-            if (maskLength > 128)
-                throw new ArgumentOutOfRangeException($"Invalid IP mask length: {maskLength}.");
+            AddressFamily.InterNetwork => (ushort)(32 - maskLength),
+            _ => (ushort)(128 - maskLength)
+        };
+    }
 
-            Maskv6 = new ulong[]{ 0UL, 0UL };
-            for (ushort i = 0; ip.AddressFamily == AddressFamily.InterNetworkV6 && i < maskLength; i++)
-            {
-                Maskv6[i / 64] = (Maskv6[i / 64] >> 1) | 0x8000_0000_0000_0000UL;
-            }
+    public IPAddress IncrementIP()
+    {
+        var ipBytes = Address.GetAddressBytes();
+
+        if (ipBytes.All(b => b == byte.MaxValue)) //do not increment 255.255.255.255
+            return Address;
+
+        for (int i = ipBytes.Length - 1; i >= 0; i--)
+        {
+            if (++ipBytes[i] != 0) //no overflow, end cycle
+                break;
         }
-        else throw new ArgumentException($"Invalid IP address family: {ip.AddressFamily}.");
+        return (Address = new IPAddress(ipBytes));
+    }
 
-        IP = ip;
-        MaskLength = maskLength;
+    private byte[] CreateMask(ushort maskLength, ushort maxMaskLength)
+    {
+        if (maskLength > maxMaskLength)
+            throw new ArgumentOutOfRangeException($"Invalid IP mask length: {maskLength}.");
+
+        var mask = new byte[maxMaskLength >> 3];
+        for (ushort i = 0; i < maskLength; i++)
+        {
+            var index = i / (maxMaskLength >> (int)Math.Sqrt(mask.Length));
+            mask[index] = (byte)((mask[index] >> 1) | 0x80);
+        }
+        return mask;
+    }
+
+    private IPAddress ApplyMask(IPAddress address, byte[] mask)
+    {
+        var ipBytes = address.GetAddressBytes();
+        for (int i = 0; i < ipBytes.Length; i++)
+        {
+            ipBytes[i] &= mask[i];
+        }
+        return new IPAddress(ipBytes);
     }
 }
