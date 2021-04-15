@@ -25,7 +25,7 @@ public static class SubnetParser
         try
         { 
             var parts = subnet.Split("/");
-            return new Subnet(IPAddress.Parse(parts[0]), Convert.ToUInt32(parts[1]));
+            return new Subnet(IPAddress.Parse(parts[0]), Convert.ToUInt16(parts[1]));
         }
         catch (Exception exc)
         {

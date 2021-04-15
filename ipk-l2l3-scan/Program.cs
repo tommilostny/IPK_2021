@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Net.NetworkInformation;
 
@@ -49,10 +50,17 @@ foreach (var subnet in subnets)
     if (subnet.Maskv6 is not null)
     {
         Console.WriteLine($" IPv6 mask {Convert.ToString((long)subnet.Maskv6[0], 2)} {Convert.ToString((long)subnet.Maskv6[1], 2)}");
+        continue;
     }
-    if (subnet.Maskv4 is not null)
+
+    var iterations = Math.Pow(2, (subnet.IP.AddressFamily == AddressFamily.InterNetwork ? 32 : 128) - subnet.MaskLength);
+    for (int i = 0; i < iterations; i++)
     {
-        Console.WriteLine($" IPv4 mask {Convert.ToString((uint)subnet.Maskv4, 2)}.");
+        if (subnet.Maskv4 is not null)
+        {
+            Console.WriteLine($" IPv4  {Convert.ToString((uint)subnet.Maskv4, 2)} -> {IPAddress.Parse(subnet.Maskv4.ToString())}");
+            subnet.Maskv4++;
+        }   
     }
 }
 
