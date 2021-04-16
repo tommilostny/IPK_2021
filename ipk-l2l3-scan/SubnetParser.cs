@@ -7,6 +7,9 @@ public static class SubnetParser
 {
     public static async Task<Subnet[]> ParseSubnets(string[] subnets)
     {
+        if (subnets is null)
+            return null;
+
         var tasks = new List<Task<Subnet>>();
         foreach (var subnet in subnets)
         {
