@@ -29,19 +29,34 @@ public class Subnet
         };
     }
 
-    public IPAddress IncrementIP()
+    public bool IsAtMaxIpAddress(byte[] ipBytes = null)
     {
-        var ipBytes = Address.GetAddressBytes();
+        if (ipBytes is null)
+            ipBytes = Address.GetAddressBytes();
 
-        if (ipBytes.All(b => b == byte.MaxValue)) //do not increment 255.255.255.255
-            return Address;
+        bool allSet = true;
+        for (int i = 0; i < ipBytes.Length && allSet; i++)
+        {
+            allSet = (ipBytes[i] | Mask[i]) == byte.MaxValue;
+        }
+        return allSet;
+    }
+
+    ///<summary>Increment subnet IP Address if it isn't at max by mask.</summary>
+    public static Subnet operator++ (Subnet subnet)
+    {
+        var ipBytes = subnet.Address.GetAddressBytes();
+
+        if (subnet.IsAtMaxIpAddress(ipBytes)) //do not increment 255.255.255.255
+            return subnet;
 
         for (int i = ipBytes.Length - 1; i >= 0; i--)
         {
             if (++ipBytes[i] != 0) //no overflow, end cycle
                 break;
         }
-        return (Address = new IPAddress(ipBytes));
+        subnet.Address = new IPAddress(ipBytes);
+        return subnet;
     }
 
     private byte[] CreateMask(ushort maskLength, ushort maxMaskLength)
@@ -49,10 +64,11 @@ public class Subnet
         if (maskLength > maxMaskLength)
             throw new ArgumentOutOfRangeException($"Invalid IP mask length: {maskLength}.");
 
+        //new byte array with length based on maxMaskLength parameter divided by size of byte (8) (right shift by 3)
         var mask = new byte[maxMaskLength >> 3];
         for (ushort i = 0; i < maskLength; i++)
         {
-            var index = i / (maxMaskLength >> (int)Math.Sqrt(mask.Length));
+            var index = i / (maxMaskLength / mask.Length);
             mask[index] = (byte)((mask[index] >> 1) | 0x80);
         }
         return mask;

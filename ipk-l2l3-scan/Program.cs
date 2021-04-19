@@ -54,4 +54,14 @@ foreach (var subnet in subnets)
     Console.WriteLine();
 }
 
+//foreach (var item in subnets)
+//{
+//    for (var subnet = item;; subnet++)
+//    {
+//        Console.WriteLine(subnet.Address);
+//
+//        if (subnet.IsAtMaxIpAddress())
+//            break;
+//    }
+//}
 return 0;
