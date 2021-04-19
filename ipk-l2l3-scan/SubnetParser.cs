@@ -7,9 +7,6 @@ public static class SubnetParser
 {
     public static async Task<Subnet[]> ParseSubnets(string[] subnets)
     {
-        if (subnets is null)
-            return null;
-
         var tasks = new List<Task<Subnet>>();
         foreach (var subnet in subnets)
         {
@@ -32,8 +29,8 @@ public static class SubnetParser
         }
         catch (Exception exc)
         {
-            Console.Error.WriteLine($"Invalid subnet {subnet}: {exc.Message}");
-            return null;
+            Console.Error.WriteLine($"Invalid subnet {subnet}:\n\t{exc.Message}");
+            throw;
         }
     }
 }

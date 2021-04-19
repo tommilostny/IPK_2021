@@ -27,19 +27,19 @@ try
 {
     (@interface, timeout, subnets) = await ArgumentParser.ParseArguments(args);
 }
-catch { return 1; }
-
-if (args.Contains("--help") || args.Contains("-h") || args.Contains("-?") || args.Contains("--version"))
-    return 0;
-
-if (@interface is null)
+catch (ArgumentNullException)
 {
-    Console.WriteLine("Missing or invalid paramerer --input.");
+    Console.WriteLine("Missing or invalid paramerer --interface.");
     PrintAllInterfaces();
     return 0;
 }
-if (subnets.Any(s => s is null))
+catch
+{
     return 1;
+}
+
+if (args.Contains("--help") || args.Contains("-h") || args.Contains("-?") || args.Contains("--version"))
+    return 0;
 
 Console.WriteLine($"Interface:\t{@interface.Name}");
 Console.WriteLine($"Timeout:\t{timeout} ms");

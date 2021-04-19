@@ -36,7 +36,10 @@ public static class ArgumentParser
         if (await rootCommand.InvokeAsync(args) != 0)
             throw new ArgumentException();
 
-        var @interface = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(i => i.Name == parsedArgs.Item1);
+        var @interface = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(i => i.Name == parsedArgs.Item1);        
+        if (@interface is null)
+            throw new ArgumentNullException();
+        
         var subnets = await SubnetParser.ParseSubnets(parsedArgs.Item3);
 
         return (@interface, parsedArgs.Item2, subnets);
