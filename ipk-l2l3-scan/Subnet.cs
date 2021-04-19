@@ -9,7 +9,9 @@ public class Subnet
 
     public byte[] Mask { get; }
 
-    public ushort Length { get; }
+    public ushort MaskLength { get; }
+
+    public uint HostsCount { get; }
 
     public Subnet(IPAddress ip, ushort maskLength)
     {
@@ -22,10 +24,11 @@ public class Subnet
 
         Address = ApplyMask(ip, Mask);
 
-        Length = ip.AddressFamily switch
+        MaskLength = maskLength;
+        HostsCount = ip.AddressFamily switch
         {
-            AddressFamily.InterNetwork => (ushort)(32 - maskLength),
-            _ => (ushort)(128 - maskLength)
+            AddressFamily.InterNetwork => (uint)Math.Pow(2, (32 - maskLength)) - 2,
+            _ => (uint)Math.Pow(2, (128 - maskLength)) - 2
         };
     }
 

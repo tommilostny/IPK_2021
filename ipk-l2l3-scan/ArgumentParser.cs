@@ -7,13 +7,13 @@ using System.Net.NetworkInformation;
 
 public static class ArgumentParser
 {
-    public static async Task<(NetworkInterface, uint, Subnet[])> ParseArguments(string[] args)
+    public static async Task<(NetworkInterface, int, Subnet[])> ParseArguments(string[] args)
     {
         var interfaceOption = new Option<string>
         (
             aliases: new string[] { "--interface", "-i" }
         );
-        var waitOption = new Option<uint>
+        var waitOption = new Option<int>
         (
             aliases: new string[] { "--wait", "-w" },
             getDefaultValue:() => 5000
@@ -27,8 +27,8 @@ public static class ArgumentParser
         var rootCommand = new RootCommand { interfaceOption, waitOption, subnetOptions };
         rootCommand.Description = "IPK Project 2\nDELTA variant: Network availability scanner";
 
-        (string, uint, string[]) parsedArgs = (null, 0, null);
-        rootCommand.Handler = CommandHandler.Create<string, uint, string[]>((@interface, wait, subnet) =>
+        (string, int, string[]) parsedArgs = (null, 0, null);
+        rootCommand.Handler = CommandHandler.Create<string, int, string[]>((@interface, wait, subnet) =>
         {
             parsedArgs = ( @interface, wait, subnet );
         });

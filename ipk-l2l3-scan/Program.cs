@@ -20,7 +20,7 @@ void PrintAllInterfaces()
 }
 
 NetworkInterface @interface;
-uint timeout;
+int timeout;
 Subnet[] subnets;
 
 try
@@ -41,27 +41,17 @@ catch
 if (args.Contains("--help") || args.Contains("-h") || args.Contains("-?") || args.Contains("--version"))
     return 0;
 
-Console.WriteLine($"Interface:\t{@interface.Name}");
-Console.WriteLine($"Timeout:\t{timeout} ms");
-Console.WriteLine($"Subnets:");
+Console.WriteLine("Scanning ranges:");
 foreach (var subnet in subnets)
 {
-    Console.Write($"{subnet.Address} with mask ");
-    foreach (var item in subnet.Mask)
-    {
-        Console.Write($"{Convert.ToString(item, 2)} ");
-    }
-    Console.WriteLine();
+    Console.WriteLine($"{subnet.Address}/{subnet.MaskLength} ({subnet.HostsCount} hosts)");
 }
 
-//foreach (var item in subnets)
-//{
-//    for (var subnet = item;; subnet++)
-//    {
-//        Console.WriteLine(subnet.Address);
-//
-//        if (subnet.IsAtMaxIpAddress())
-//            break;
-//    }
-//}
+var scanner = new NetworkScanner(timeout); 
+foreach (var subnet in subnets)
+{
+    Console.WriteLine();
+    await scanner.Scan(subnet);
+}
+
 return 0;
