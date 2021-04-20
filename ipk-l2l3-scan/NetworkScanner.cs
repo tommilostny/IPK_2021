@@ -18,7 +18,8 @@ public class NetworkScanner
     public async Task Scan(Subnet subnet)
     {
         int devicesFound = 0;
-        for (;;)
+
+        while (!subnet.IsAtMaxIpAddress())
         {
             var tasks = new List<Task<PingReply>>();
             var adresses = new List<IPAddress>();
@@ -42,9 +43,6 @@ public class NetworkScanner
                 Console.WriteLine($"{adresses[i]}:\t{response.Status}");
                 Console.ResetColor();
             }
-
-            if (subnet.IsAtMaxIpAddress())
-                break;
         }
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine($"Found {devicesFound} devices.");
