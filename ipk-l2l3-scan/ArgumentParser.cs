@@ -36,6 +36,9 @@ public static class ArgumentParser
         if (await rootCommand.InvokeAsync(args) != 0)
             throw new ArgumentException();
 
+        if (args.Contains("--help") || args.Contains("-h") || args.Contains("-?") || args.Contains("--version"))
+            throw new ApplicationException();
+
         var @interface = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(i => i.Name == parsedArgs.Item1);        
         if (@interface is null)
             throw new ArgumentNullException();

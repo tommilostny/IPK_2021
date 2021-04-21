@@ -27,19 +27,20 @@ try
 {
     (@interface, timeout, subnets) = await ArgumentParser.ParseArguments(args);
 }
-catch (ArgumentNullException)
+catch (ArgumentNullException) //missing interface exception
 {
     Console.WriteLine("Missing or invalid paramerer --interface.");
     PrintAllInterfaces();
+    return 0;
+}
+catch (ApplicationException) //ok exception thrown if help is being displayed
+{
     return 0;
 }
 catch
 {
     return 1;
 }
-
-if (args.Contains("--help") || args.Contains("-h") || args.Contains("-?") || args.Contains("--version"))
-    return 0;
 
 Console.WriteLine("Scanning ranges:");
 foreach (var subnet in subnets)
@@ -51,7 +52,7 @@ var scanner = new NetworkScanner(timeout);
 foreach (var subnet in subnets)
 {
     Console.WriteLine();
-    await scanner.Scan(subnet);
+    await scanner.ScanAsync(subnet);
 }
 
 return 0;
