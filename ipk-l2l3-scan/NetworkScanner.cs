@@ -3,65 +3,83 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
 using System.Collections.Generic;
+using System.Net.NetworkInformation;
+using System.Threading;
+using System.Linq;
 
 public class NetworkScanner
 {
-    private readonly int _timeout;
-
     private const int _pingsAtOnceLimit = 2048;
+    private readonly int _timeout;
+    private readonly IPAddress _selfAddress;
+    private readonly ProtocolType _icmpProtocol;
+    private Subnet _subnet;
 
-    public NetworkScanner(int timeout)
+    public NetworkScanner(int timeout, NetworkInterface @interface, Subnet subnet)
     {
+        var adresses = @interface.GetIPProperties().UnicastAddresses;
+        _selfAddress = adresses.FirstOrDefault(a => a.Address.AddressFamily == subnet.Address.AddressFamily).Address;
+
+        _subnet = subnet;
         _timeout = timeout;
+        _icmpProtocol = _selfAddress.AddressFamily == AddressFamily.InterNetwork ? ProtocolType.Icmp : ProtocolType.IcmpV6;
     }
 
-    public async Task ScanAsync(Subnet subnet)
+    public async Task ScanAsync()
     {
-        while (!subnet.IsAtMaxIpAddress())
-        {
-            var tasks = new List<Task>();
-            var adresses = new List<string>();
+        var subnetAddressBackup = _subnet.Address;
 
+        while (!_subnet.IsAtMaxIpAddress())
+        {
+            var tasks = new List<Task<(bool, IPAddress)>>();
             for (int i = 0; i < _pingsAtOnceLimit; i++)
             {
-                if ((subnet++).IsAtMaxIpAddress())
+                if ((_subnet++).IsAtMaxIpAddress())
                     break;
 
-                tasks.Add(IcmpRequest(subnet.Address));
-                adresses.Add(subnet.Address.ToString());
+                tasks.Add(IcmpEchoAsync(_subnet.Address));
             }
-            await Task.WhenAll(tasks);
+            foreach (var task in tasks)
+            {
+                var result = await task;
+                if (result.Item1)
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                }
+                Console.WriteLine($"{result.Item2}:\ticmpv4 {(result.Item1 ? "OK" : "FAIL")}");
+                Console.ResetColor();
+            }
         }
+
+        _subnet.Address = subnetAddressBackup;
     }
 
-    private async Task IcmpRequest(IPAddress address)
+    private async Task<(bool, IPAddress)> IcmpEchoAsync(IPAddress targetAddress)
     {
-        var buffer = new byte[256];
-        var protocol = address.AddressFamily == AddressFamily.InterNetwork ? ProtocolType.Icmp : ProtocolType.IcmpV6;
-        var endpoint = new IPEndPoint(address, 0);
+        var buffer = new byte[64];
+        using var timeoutCancellation = new CancellationTokenSource(_timeout);
 
-        //await Console.Out.WriteLineAsync($"{endpoint.Address}:{endpoint.Port}");
+        using var socket = new Socket(_selfAddress.AddressFamily, SocketType.Raw, _icmpProtocol);
+        socket.Bind(new IPEndPoint(_selfAddress, 0));
 
-        var socket = new Socket(endpoint.AddressFamily, SocketType.Raw, protocol);
-        await socket.ConnectAsync(endpoint);
-        
-        var args = new SocketAsyncEventArgs();
-        //event
-        var result = socket.ReceiveAsync(args);
-        
-        //void ReceiveCallback(IAsyncResult result)
-        //{
-        //    int length = socket.EndReceiveFrom(result, ref endpoint);
-        //    if (length > 0)
-        //    {
-        //        Console.ForegroundColor = ConsoleColor.Green;
-        //    }
-        //    Console.WriteLine(endpoint.ToString());
-        //    Console.ResetColor();
-        //}
-//
-        //socket.BeginReceiveFrom(buffer, 0, buffer.Length, SocketFlags.None, ref endpoint, ReceiveCallback, null);
-        
-        socket.Close(_timeout);
+        await socket.ConnectAsync(new IPEndPoint(targetAddress, 0));
+        await socket.SendAsync(buffer, SocketFlags.None);
+
+        int length;
+        try
+        {
+            length = await socket.ReceiveAsync(buffer, SocketFlags.None, timeoutCancellation.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            length = 0;
+        }
+        return (length > 0, targetAddress);
+    }
+
+    private async Task<(bool, IPAddress)> IcmpEchoUsingPing(IPAddress address)
+    {
+        var response = await new Ping().SendPingAsync(address, _timeout);
+        return (response.Status == IPStatus.Success, address);
     }
 }

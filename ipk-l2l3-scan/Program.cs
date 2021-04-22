@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Net.NetworkInformation;
+using System.Threading;
 
 void PrintAllInterfaces()
 {
@@ -42,17 +43,17 @@ catch
     return 1;
 }
 
-Console.WriteLine("Scanning ranges:");
+Console.WriteLine("\nScanning ranges:");
 foreach (var subnet in subnets)
 {
     Console.WriteLine($"{subnet.Address}/{subnet.MaskLength} ({subnet.HostsCount} hosts)");
 }
 
-var scanner = new NetworkScanner(timeout); 
 foreach (var subnet in subnets)
 {
     Console.WriteLine();
-    await scanner.ScanAsync(subnet);
+    var scanner = new NetworkScanner(timeout, @interface, subnet); 
+    await scanner.ScanAsync();
 }
 
 return 0;

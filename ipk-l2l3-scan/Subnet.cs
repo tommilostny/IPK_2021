@@ -5,7 +5,7 @@ using System.Net.Sockets;
 
 public class Subnet
 {
-    public IPAddress Address { get; private set; }
+    public IPAddress Address { get; set; }
 
     public byte[] Mask { get; }
 
