@@ -56,18 +56,18 @@ public class NetworkScanner
 
     private async Task<(bool, IPAddress)> IcmpEchoAsync(IPAddress targetAddress)
     {
-        var buffer = new byte[64];
         using var timeoutCancellation = new CancellationTokenSource(_timeout);
 
         using var socket = new Socket(_selfAddress.AddressFamily, SocketType.Raw, _icmpProtocol);
         socket.Bind(new IPEndPoint(_selfAddress, 0));
 
         await socket.ConnectAsync(new IPEndPoint(targetAddress, 0));
-        await socket.SendAsync(buffer, SocketFlags.None);
+        await socket.SendAsync(IcmpPacket.RequestAsBytes(), SocketFlags.None);
 
         int length;
         try
         {
+            var buffer = new byte[128];
             length = await socket.ReceiveAsync(buffer, SocketFlags.None, timeoutCancellation.Token);
         }
         catch (OperationCanceledException)

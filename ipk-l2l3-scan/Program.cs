@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Linq;
-using System.Net;
-using System.Net.Sockets;
 using System.Net.NetworkInformation;
-using System.Threading;
 
 void PrintAllInterfaces()
 {
@@ -43,7 +39,7 @@ catch
     return 1;
 }
 
-Console.WriteLine("\nScanning ranges:");
+Console.WriteLine("Scanning ranges:");
 foreach (var subnet in subnets)
 {
     Console.WriteLine($"{subnet.Address}/{subnet.MaskLength} ({subnet.HostsCount} hosts)");
