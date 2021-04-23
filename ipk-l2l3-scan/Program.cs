@@ -5,14 +5,14 @@ void PrintAllInterfaces()
 {
     Console.WriteLine("Available network interfaces:\n");
     Console.ForegroundColor = ConsoleColor.Cyan;
-    Console.WriteLine("NAME\tSTATUS\tTYPE");
+    Console.WriteLine("STATUS\tTYPE\tNAME");
     Console.ResetColor();
     foreach (var @interface in NetworkInterface.GetAllNetworkInterfaces())
     {
+        Console.Write($"{@interface.OperationalStatus}\t{@interface.NetworkInterfaceType}\t");
         Console.ForegroundColor = ConsoleColor.Green;
-        Console.Write(@interface.Name);
+        Console.WriteLine(@interface.Name);
         Console.ResetColor();
-        Console.WriteLine($"\t{@interface.OperationalStatus}\t{@interface.NetworkInterfaceType}");
     }
 }
 
@@ -48,7 +48,7 @@ foreach (var subnet in subnets)
 foreach (var subnet in subnets)
 {
     Console.WriteLine();
-    var scanner = new NetworkScanner(timeout, @interface, subnet); 
+    var scanner = new NetworkScanner(@interface, timeout, subnet); 
     await scanner.ScanAsync();
 }
 

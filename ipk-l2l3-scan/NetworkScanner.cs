@@ -15,7 +15,7 @@ public class NetworkScanner
     private readonly ProtocolType _icmpProtocol;
     private Subnet _subnet;
 
-    public NetworkScanner(int timeout, NetworkInterface @interface, Subnet subnet)
+    public NetworkScanner(NetworkInterface @interface, int timeout, Subnet subnet)
     {
         var adresses = @interface.GetIPProperties().UnicastAddresses;
         _selfAddress = adresses.FirstOrDefault(a => a.Address.AddressFamily == subnet.Address.AddressFamily).Address;
@@ -62,7 +62,7 @@ public class NetworkScanner
         socket.Bind(new IPEndPoint(_selfAddress, 0));
 
         await socket.ConnectAsync(new IPEndPoint(targetAddress, 0));
-        await socket.SendAsync(IcmpPacket.RequestAsBytes(), SocketFlags.None);
+        await socket.SendAsync(IcmpPacket.EchoRequestAsBytes(), SocketFlags.None);
 
         int length;
         try
@@ -75,11 +75,5 @@ public class NetworkScanner
             length = 0;
         }
         return (length > 0, targetAddress);
-    }
-
-    private async Task<(bool, IPAddress)> IcmpEchoUsingPing(IPAddress address)
-    {
-        var response = await new Ping().SendPingAsync(address, _timeout);
-        return (response.Status == IPStatus.Success, address);
     }
 }

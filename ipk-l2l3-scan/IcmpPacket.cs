@@ -3,28 +3,27 @@ using System.Runtime.InteropServices;
 
 public struct IcmpPacket
 {
-    public byte Type;
-    public byte Code;
+    public ushort TypeCode;
     public ushort Checksum;
     public ushort Id;
     public ushort Sequence;
 
     private static ushort id = 0;
     private static ushort sequence = 0;
-    public static byte[] RequestAsBytes()
+    public static byte[] EchoRequestAsBytes()
     {
         var packet = new IcmpPacket
         {
-            Type = 8,
-            Code = 0,
-            Checksum = 0,
+            TypeCode = 0x0008, //Type 8 - Echo request
             Id = ++id,
             Sequence = ++sequence
         };
-        var size = Marshal.SizeOf(packet);
-        var packetAsBytes = new byte[size + 32];
+        packet.Checksum = (ushort)(~((uint)packet.TypeCode + (uint)packet.Id + (uint)packet.Sequence));
 
-        IntPtr ptr = Marshal.AllocHGlobal(size + 32);
+        var size = Marshal.SizeOf(packet);
+        var packetAsBytes = new byte[size];
+
+        IntPtr ptr = Marshal.AllocHGlobal(size);
         Marshal.StructureToPtr(packet, ptr, true);
         Marshal.Copy(ptr, packetAsBytes, 0, size);
         Marshal.FreeHGlobal(ptr);
