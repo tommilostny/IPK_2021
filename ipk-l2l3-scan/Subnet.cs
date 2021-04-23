@@ -44,7 +44,7 @@ public class Subnet
         return allSet;
     }
 
-    ///<summary>Increment subnet IP Address if it isn't at max by mask.</summary>
+    //Increment subnet IP Address if it isn't at max by mask
     public static Subnet operator++ (Subnet subnet)
     {
         var ipBytes = subnet.Address.GetAddressBytes();

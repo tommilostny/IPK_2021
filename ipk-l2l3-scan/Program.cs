@@ -40,12 +40,12 @@ catch
 }
 
 Console.WriteLine("Scanning ranges:");
-foreach (var subnet in subnets)
+foreach (var subnet in subnets) //list subnet ranges
 {
     Console.WriteLine($"{subnet.Address}/{subnet.MaskLength} ({subnet.HostsCount} hosts)");
 }
 
-foreach (var subnet in subnets)
+foreach (var subnet in subnets) //scan all subnets
 {
     Console.WriteLine();
     var scanner = new NetworkScanner(@interface, timeout, subnet); 

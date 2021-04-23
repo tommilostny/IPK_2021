@@ -1,4 +1,5 @@
 using System;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 
 public struct IcmpPacket
@@ -10,11 +11,14 @@ public struct IcmpPacket
 
     private static ushort id = 0;
     private static ushort sequence = 0;
-    public static byte[] EchoRequestAsBytes()
+    public static byte[] EchoRequestAsBytes(ProtocolType protocol)
     {
         var packet = new IcmpPacket
         {
-            TypeCode = 0x0008, //Type 8 - Echo request
+            //Echo request types:
+            //ICMPv4: Type 8
+            //ICMPv6: Type 128
+            TypeCode = protocol == ProtocolType.Icmp ? (ushort)0x0008 : (ushort)0x0080, 
             Id = ++id,
             Sequence = ++sequence
         };
