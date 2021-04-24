@@ -39,9 +39,12 @@ public static class ArgumentParser
         if (args.Contains("--help") || args.Contains("-h") || args.Contains("-?") || args.Contains("--version"))
             throw new ApplicationException();
 
+        if (parsedArgs.Item2 < 0)
+            throw new IndexOutOfRangeException($"Invalid --wait argument (expected number > 0, got {parsedArgs.Item2})");
+
         var @interface = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(i => i.Name == parsedArgs.Item1);        
         if (@interface is null)
-            throw new ArgumentNullException();
+            throw new ArgumentNullException("Missing or invalid paramerer --interface.");
         
         var subnets = await SubnetParser.ParseSubnets(parsedArgs.Item3);
 

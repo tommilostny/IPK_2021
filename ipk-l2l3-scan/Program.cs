@@ -5,11 +5,11 @@ void PrintAllInterfaces()
 {
     Console.WriteLine("Available network interfaces:\n");
     Console.ForegroundColor = ConsoleColor.Cyan;
-    Console.WriteLine("STATUS\tTYPE\tNAME");
+    Console.WriteLine("STATUS\tNAME");
     Console.ResetColor();
     foreach (var @interface in NetworkInterface.GetAllNetworkInterfaces())
     {
-        Console.Write($"{@interface.OperationalStatus}\t{@interface.NetworkInterfaceType}\t");
+        Console.Write($"{@interface.OperationalStatus}\t");
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine(@interface.Name);
         Console.ResetColor();
@@ -24,15 +24,20 @@ try
 {
     (@interface, timeout, subnets) = await ArgumentParser.ParseArguments(args);
 }
-catch (ArgumentNullException) //missing interface exception
-{
-    Console.WriteLine("Missing or invalid paramerer --interface.");
-    PrintAllInterfaces();
-    return 0;
-}
 catch (ApplicationException) //ok exception thrown if help is being displayed
 {
     return 0;
+}
+catch (ArgumentNullException exc) //missing interface exception
+{
+    Console.WriteLine($"{exc.Message}.");
+    PrintAllInterfaces();
+    return 0;
+}
+catch (IndexOutOfRangeException exc) //timeout negative
+{
+    Console.Error.WriteLine($"{exc.Message}.");
+    return 1;
 }
 catch
 {
