@@ -6,9 +6,9 @@ Autor: Tomáš Milostný (xmilos02)
 ---
 
 Program **ipk-l2l3-scan** je vytvořený v jazyce **C# 9.0** nad platformou **.NET 5.0**.
-Skenuje zadané subnetové rozsahy pomocí protokolu ICMP/ICMPv6 a ARP.
+Skenuje zadané rozsahy IP adres pomocí protokolů ICMP/ICMPv6 a ARP.
 
-Omezení oproti původnímu zadání: Projekt neimplementuje protokol NDP pro IPv6 subnety.
+Omezení oproti původnímu zadání: Projekt neimplementuje práci s protokolem NDP pro IPv6 subnety.
 
 ---
 
@@ -36,4 +36,4 @@ Omezení oproti původnímu zadání: Projekt neimplementuje protokol NDP pro IP
 * [SubnetParser.cs](SubnetParser.cs) - parser subnetů (vytváří ``Subnet`` objekty)
 * [Subnet.cs](Subnet.cs) - třída ``Subnet`` - drží si informace o skenované síti, aplikuje masku sítě na IP adresu zadanou argumentem
 * [NetworkScanner.cs](NetworkScanner.cs) - provádí skenování rozsahu sítě na daném rozhraní, vypisuje status ICMP/ICMPv6 a ARP na standardní výstup
-* [IcmpPacket.cs](IcmpPacket.cs) - struktura ICMP packetu, obsahuje statickou funkci, která tuto strukturu převede na pole bytů odeslané ICMP/ICMPv6 socketem
+* [IcmpPacket.cs](IcmpPacket.cs) - struktura ICMP packetu, obsahuje statickou funkci, která tuto strukturu převede na pole bytů odeslané raw socketem
