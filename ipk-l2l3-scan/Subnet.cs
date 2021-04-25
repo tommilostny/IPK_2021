@@ -7,12 +7,8 @@ namespace ipk_l2l3_scan
     public class Subnet
     {
         public IPAddress Address { get; set; }
-
         public byte[] Mask { get; }
-
         public ushort MaskLength { get; }
-
-        public uint HostsCount { get; }
 
         public Subnet(IPAddress ip, ushort maskLength)
         {
@@ -22,15 +18,8 @@ namespace ipk_l2l3_scan
                 AddressFamily.InterNetworkV6 => CreateMask(maskLength, 128),
                 _ => throw new ArgumentException($"Invalid IP address family: {ip.AddressFamily}.")
             };
-
             Address = ApplyMask(ip, Mask);
-
             MaskLength = maskLength;
-            HostsCount = ip.AddressFamily switch
-            {
-                AddressFamily.InterNetwork => (uint)Math.Pow(2, 32 - maskLength) - 2,
-                _ => (uint)Math.Pow(2, 128 - maskLength) - 2
-            };
         }
 
         public bool IsAtMaxIpAddress(byte[] ipBytes = null)
@@ -72,7 +61,7 @@ namespace ipk_l2l3_scan
             var mask = new byte[maxMaskLength >> 3];
             for (ushort i = 0; i < maskLength; i++)
             {
-                var index = i / (maxMaskLength / mask.Length);
+                int index = i / (maxMaskLength / mask.Length);
                 mask[index] = (byte)(mask[index] >> 1 | 0x80);
             }
             return mask;

@@ -1,6 +1,7 @@
 ﻿using ipk_l2l3_scan;
 using System;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 
 static void PrintAllInterfaces()
@@ -23,7 +24,12 @@ static void ListScanningRanges(Subnet[] subnets)
     Console.WriteLine("Scanning ranges:");
     foreach (var subnet in subnets) //list subnet ranges
     {
-        Console.WriteLine($"{subnet.Address}/{subnet.MaskLength} ({subnet.HostsCount} hosts)");
+        var hostsCount = subnet.Address.AddressFamily switch
+        {
+            AddressFamily.InterNetwork => (uint)Math.Pow(2, 32 - subnet.MaskLength) - 2,
+            _ => (uint)Math.Pow(2, 128 - subnet.MaskLength) - 2
+        };
+        Console.WriteLine($"{subnet.Address}/{subnet.MaskLength} ({hostsCount} hosts)");
     }
 }
 
@@ -32,16 +38,14 @@ static async Task ScanNetwork(NetworkInterface @interface, int timeout, Subnet[]
     foreach (var subnet in subnets) //scan all subnets
     {
         Console.WriteLine();
-        NetworkScanner scanner;
         try
         {
-            scanner = new NetworkScanner(@interface, timeout, subnet);
+            var scanner = new NetworkScanner(@interface, timeout, subnet);
             await scanner.ScanAsync();
         }
         catch
         {
-            Console.Error.WriteLine($"Unable to scan subnet {subnet.Address} on interface {@interface}.");
-            continue;  
+            Console.Error.WriteLine($"Unable to scan subnet {subnet.Address} on interface {@interface.Name}.");
         }
     }
 }
@@ -58,9 +62,9 @@ catch (ApplicationException) //ok exception thrown if help is being displayed
 {
     return 0;
 }
-catch (ArgumentNullException exc) //missing interface exception
+catch (InvalidOperationException) //missing interface exception
 {
-    Console.WriteLine($"{exc.Message}.\n");
+    Console.WriteLine($"Missing or invalid paramerer --interface.\n");
     PrintAllInterfaces();
     return 0;
 }
@@ -69,7 +73,7 @@ catch (IndexOutOfRangeException exc) //timeout negative
     Console.Error.WriteLine($"{exc.Message}.");
     return 1;
 }
-catch
+catch //other errors printed by ArgumentParser and System.CommandLine
 {
     return 1;
 }

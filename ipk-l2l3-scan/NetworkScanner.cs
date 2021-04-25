@@ -28,7 +28,11 @@ namespace ipk_l2l3_scan
             _interface = @interface;
             _subnet = subnet;
             _timeout = timeout;
-            _icmpProtocol = _selfAddress.AddressFamily == AddressFamily.InterNetwork ? ProtocolType.Icmp : ProtocolType.IcmpV6;
+            _icmpProtocol = _selfAddress.AddressFamily switch
+            {
+                AddressFamily.InterNetwork => ProtocolType.Icmp,
+                _ => ProtocolType.IcmpV6
+            };
         }
 
         public async Task ScanAsync()
@@ -66,14 +70,14 @@ namespace ipk_l2l3_scan
         private async Task<(bool, IPAddress, bool, PhysicalAddress)> EchoAsync(IPAddress targetAddress)
         {
             var resultMacAddress = PhysicalAddress.None;
-            using var timeoutCancellation = new CancellationTokenSource(_timeout);
+            using var timeoutCancellation = new CancellationTokenSource(millisecondsDelay:_timeout);
 
             using var icmpSocket = new Socket(_selfAddress.AddressFamily, SocketType.Raw, _icmpProtocol);
-            icmpSocket.Bind(new IPEndPoint(_selfAddress, 0));
+            icmpSocket.Bind(new IPEndPoint(_selfAddress, port:0));
 
             try
             {
-                await icmpSocket.ConnectAsync(new IPEndPoint(targetAddress, 0));
+                await icmpSocket.ConnectAsync(new IPEndPoint(targetAddress, port:0));
                 await icmpSocket.SendAsync(IcmpPacket.EchoRequestAsBytes(_icmpProtocol), SocketFlags.None);
             }
             catch //error creating socket - request fails
@@ -84,7 +88,7 @@ namespace ipk_l2l3_scan
             int icmpLength;
             try
             {
-                var buffer = new byte[32];
+                var buffer = new byte[64];
                 icmpLength = await icmpSocket.ReceiveAsync(buffer, SocketFlags.None, timeoutCancellation.Token);
             }
             catch (OperationCanceledException) //timeout - request cancelled by token

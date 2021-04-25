@@ -44,9 +44,7 @@ namespace ipk_l2l3_scan
             if (parsedArgs.Item2 < 0)
                 throw new IndexOutOfRangeException($"Invalid --wait argument (expected number > 0, got {parsedArgs.Item2})");
 
-            var @interface = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(i => i.Name == parsedArgs.Item1);
-            if (@interface is null)
-                throw new ArgumentNullException("Missing or invalid paramerer --interface.");
+            var @interface = NetworkInterface.GetAllNetworkInterfaces().First(i => i.Name == parsedArgs.Item1);
 
             var subnets = await SubnetParser.ParseSubnets(parsedArgs.Item3);
 
