@@ -17,20 +17,18 @@ namespace ipk_l2l3_scan
         private readonly int _timeout;
         private readonly IPAddress _selfAddress;
         private readonly ProtocolType _icmpProtocol;
-        private readonly char _icmpVersion;
         private Subnet _subnet;
         private readonly NetworkInterface _interface;
 
         public NetworkScanner(NetworkInterface @interface, int timeout, Subnet subnet)
         {
             var adresses = @interface.GetIPProperties().UnicastAddresses;
-            _selfAddress = adresses.FirstOrDefault(a => a.Address.AddressFamily == subnet.Address.AddressFamily).Address;
+            _selfAddress = adresses.First(a => a.Address.AddressFamily == subnet.Address.AddressFamily).Address;
 
             _interface = @interface;
             _subnet = subnet;
             _timeout = timeout;
             _icmpProtocol = _selfAddress.AddressFamily == AddressFamily.InterNetwork ? ProtocolType.Icmp : ProtocolType.IcmpV6;
-            _icmpVersion = _icmpProtocol == ProtocolType.Icmp ? '4' : '6';
         }
 
         public async Task ScanAsync()
@@ -51,10 +49,13 @@ namespace ipk_l2l3_scan
                 {
                     var result = await task;
                     if (result.Item1)
-                    {
                         Console.ForegroundColor = ConsoleColor.Green; //mark ICMP success with green color
-                    }
-                    Console.WriteLine($"{result.Item2}:\tarp {(result.Item3 ? $"OK ({result.Item4})" : "FAIL")}, icmpv{_icmpVersion} {(result.Item1 ? "OK" : "FAIL")}");
+
+                    if (_icmpProtocol == ProtocolType.Icmp)
+                        Console.WriteLine($"{result.Item2}:\tarp {(result.Item3 ? $"OK ({result.Item4})" : "FAIL")}, icmpv4 {(result.Item1 ? "OK" : "FAIL")}");
+                    else
+                        Console.WriteLine($"{result.Item2}:\ticmpv6 {(result.Item1 ? "OK" : "FAIL")}");
+
                     Console.ResetColor();
                 }
             }
@@ -97,7 +98,7 @@ namespace ipk_l2l3_scan
             {
                 try
                 {
-                    resultMacAddress = SendArp(targetAddress);
+                    resultMacAddress = GetArp(targetAddress);
                     arpSuccess = resultMacAddress.GetAddressBytes().Any(mac => mac != 0); //00-00-00-00-00-00 -> empty MAC, fail
                 }
                 catch
@@ -108,7 +109,7 @@ namespace ipk_l2l3_scan
             return (icmpLength > 0, targetAddress, arpSuccess, resultMacAddress);
         }
 
-        private PhysicalAddress SendArp(IPAddress targetAddress) //get target MAC address using SharpPcap library
+        private PhysicalAddress GetArp(IPAddress targetAddress) //get target MAC address using SharpPcap library
         {
             var device = LibPcapLiveDeviceList.Instance.First(i => i.Interface.FriendlyName == _interface.Name);
 

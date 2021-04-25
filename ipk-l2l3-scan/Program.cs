@@ -32,8 +32,17 @@ static async Task ScanNetwork(NetworkInterface @interface, int timeout, Subnet[]
     foreach (var subnet in subnets) //scan all subnets
     {
         Console.WriteLine();
-        var scanner = new NetworkScanner(@interface, timeout, subnet);
-        await scanner.ScanAsync();
+        NetworkScanner scanner;
+        try
+        {
+            scanner = new NetworkScanner(@interface, timeout, subnet);
+            await scanner.ScanAsync();
+        }
+        catch
+        {
+            Console.Error.WriteLine($"Unable to scan subnet {subnet.Address} on interface {@interface}.");
+            continue;  
+        }
     }
 }
 
