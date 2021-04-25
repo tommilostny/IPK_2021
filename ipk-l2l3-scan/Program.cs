@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 static void PrintAllInterfaces()
 {
-    Console.WriteLine("Available network interfaces:\n");
+    Console.WriteLine("Available network interfaces:");
     Console.ForegroundColor = ConsoleColor.Cyan;
     Console.WriteLine("STATUS\tNAME");
     Console.ResetColor();
@@ -60,7 +60,7 @@ catch (ApplicationException) //ok exception thrown if help is being displayed
 }
 catch (ArgumentNullException exc) //missing interface exception
 {
-    Console.WriteLine($"{exc.Message}.");
+    Console.WriteLine($"{exc.Message}.\n");
     PrintAllInterfaces();
     return 0;
 }
