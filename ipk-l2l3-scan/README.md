@@ -5,7 +5,7 @@ Autor: Tomáš Milostný (xmilos02)
 
 ---
 
-Program **ipk-l2l3-scan** je vytvořený v jazyce **C# 9.0** nad platformou **.NET 5.0**.
+Program **ipk-l2l3-scan** je vytvořený v jazyce **C#** nad platformou **.NET Core 3.1**.
 Skenuje zadané rozsahy IP adres pomocí protokolů ICMP/ICMPv6 a ARP.
 
 Omezení oproti původnímu zadání: Projekt neimplementuje práci s protokolem NDP pro IPv6 subnety.
@@ -21,9 +21,9 @@ Omezení oproti původnímu zadání: Projekt neimplementuje práci s protokolem
     - Výpis nápovědy: ``make run-help``
     - Zabalení projektu do .tar archivu: ``make tar``
 
-* Z příkazové řádky nad **dotnet**:
+* Z příkazové řádky nad **dotnet cli**:
     - Sestavení programu: ``dotnet build``
-    - Spuštění programu s argumenty cli: ``dotnet run -- --interface "Wi-Fi" --subnet 192.168.1.0/24  --wait 1000``
+    - Spuštění programu s argumenty: ``dotnet run -- --interface "Wi-Fi" --subnet 192.168.1.0/24  --wait 1000``
     - Spuštění programu bez argumetů (výpis seznamu rozhraní): ``dotnet run``
     - Výpis nápovědy: ``dotnet run -- --help``
 
