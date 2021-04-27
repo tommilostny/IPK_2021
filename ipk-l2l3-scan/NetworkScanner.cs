@@ -38,6 +38,9 @@ namespace ipk_l2l3_scan
         public async Task ScanAsync()
         {
             var subnetAddressBackup = _subnet.Address;
+            var scanningMessage = $"Scanning subnet {subnetAddressBackup}...";
+            Console.Write($"{scanningMessage}\r");
+            bool scanningMessageSwept = false;
 
             while (!_subnet.IsAtMaxIpAddress()) //for each address in subnet
             {
@@ -52,6 +55,11 @@ namespace ipk_l2l3_scan
                 foreach (var task in tasks) //process all requests
                 {
                     var result = await task;
+
+                    //Sweep "Scanning subnet xxx..." if present
+                    if (!scanningMessageSwept)
+                        ScanningMessageSweep(scanningMessage, ref scanningMessageSwept);
+
                     if (result.Item1)
                         Console.ForegroundColor = ConsoleColor.Green; //mark ICMP success with green color
 
@@ -125,6 +133,16 @@ namespace ipk_l2l3_scan
                 Timeout = new TimeSpan(0, 0, 0, 0, _timeout)
             };
             return arp.Resolve(targetAddress);
+        }
+
+        private void ScanningMessageSweep(string scanningMessage, ref bool scanningMessageSwept)
+        {
+            for (int i = 0; !scanningMessageSwept; i++) 
+            {
+                Console.Write(' ');
+                if (scanningMessageSwept = i == scanningMessage.Length - 1)
+                    Console.Write('\r');
+            }
         }
     }
 }
